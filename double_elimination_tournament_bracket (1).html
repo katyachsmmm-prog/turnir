@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Турнирная Сетка 6 Игроков — Custom Double Elimination</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #070a12;
+            color: #f3f4f6;
+        }
+
+        /* Custom Glows */
+        .glow-ub {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
+        }
+        .glow-lb {
+            box-shadow: 0 0 25px rgba(225, 29, 72, 0.25);
+        }
+        .glow-gold {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
+        }
+
+        .text-glow-gold {
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+        }
+
+        .text-glow-blue {
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        /* Match Card Hover Transitions */
+        .player-slot {
+            transition: all 0.2s ease-in-out;
+        }
+        .player-slot:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white pb-12">
+
+    <!-- Header Section -->
+    <header class="w-full bg-slate-900/90 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-50 shadow-xl">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-blue-600/20 border border-blue-500/40 rounded-2xl text-blue-400">
+                    <i data-lucide="swords" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black uppercase tracking-wider text-white text-glow-blue flex items-center gap-2">
+                        Турнир на 6 Игроков <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-0.5 rounded-full font-bold">Сетка с выбыванием</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">3 матча 1/4 ➔ Верхняя & Нижняя Сетка ➔ Стыковой Матч ➔ Финал</p>
+                </div>
+            </div>
+
+            <!-- Global Controls -->
+            <div class="flex flex-wrap items-center gap-2 md:gap-3">
+                <button id="shuffleBtn" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 text-slate-200 text-xs font-bold uppercase tracking-wider rounded-xl transition active:scale-95">
+                    <i data-lucide="shuffle" class="w-4 h-4 text-blue-400"></i>
+                    Перемешать пары
+                </button>
+                <button id="resetBtn" class="flex items-center gap-2 px-4 py-2 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 text-xs font-bold uppercase tracking-wider rounded-xl transition active:scale-95">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    Сбросить
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Bracket Flow -->
+    <main class="flex-grow flex flex-col items-center justify-start p-4 md:p-8 space-y-12 overflow-x-auto">
+        <div class="min-w-[1200px] max-w-7xl w-full space-y-12">
+
+            <!-- SECTION 1: STAGE 1 (3 MATCHES FOR ALL 6 PLAYERS) -->
+            <section class="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 relative backdrop-blur-sm">
+                <div class="absolute -top-3.5 left-6 bg-slate-800 border border-slate-700 text-blue-400 text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4"></i> 1 РАУНД: 3 ГРУППЫ / 3 МАТЧА (Все 6 игроков)
+                </div>
+
+                <div class="grid grid-cols-3 gap-6 pt-4">
+                    
+                    <!-- Match 1 -->
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-blue-500/40 transition">
+                        <div class="text-[11px] text-slate-400 font-extrabold mb-3 flex justify-between uppercase tracking-wider">
+                            <span>Группа #1</span>
+                            <span class="text-blue-400">1/4 Финала</span>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div id="r1m1-p0" onclick="winR1Match(1, 0)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="0" value="Лёша 1" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                            <div id="r1m1-p1" onclick="winR1Match(1, 1)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="1" value="Саша" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Match 2 -->
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-blue-500/40 transition">
+                        <div class="text-[11px] text-slate-400 font-extrabold mb-3 flex justify-between uppercase tracking-wider">
+                            <span>Группа #2</span>
+                            <span class="text-blue-400">1/4 Финала</span>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div id="r1m2-p2" onclick="winR1Match(2, 2)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="2" value="Лёша 2" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                            <div id="r1m2-p3" onclick="winR1Match(2, 3)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="3" value="Дима" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Match 3 -->
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg hover:border-blue-500/40 transition">
+                        <div class="text-[11px] text-slate-400 font-extrabold mb-3 flex justify-between uppercase tracking-wider">
+                            <span>Группа #3</span>
+                            <span class="text-blue-400">1/4 Финала</span>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div id="r1m3-p4" onclick="winR1Match(3, 4)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="4" value="Слава" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                            <div id="r1m3-p5" onclick="winR1Match(3, 5)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer">
+                                <input type="text" data-player-id="5" value="Катя" class="bg-transparent text-sm font-bold focus:outline-none w-full text-slate-100" onclick="event.stopPropagation()">
+                                <span class="btn-status text-xs font-extrabold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">Победа?</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+
+            <!-- SECTION 2: UPPER & LOWER BRACKETS GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- UPPER BRACKET (ВЕРХНЯЯ СЕТКА ПОБЕДИТЕЛЕЙ) -->
+                <section class="bg-slate-900/60 border border-blue-900/40 rounded-3xl p-6 relative backdrop-blur-sm glow-ub space-y-6">
+                    <div class="absolute -top-3.5 left-6 bg-blue-600 text-white text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-4 h-4"></i> Верхняя Сетка (Победители 1 Раунда)
+                    </div>
+
+                    <!-- Upper Semi & Upper Final -->
+                    <div class="space-y-6 pt-2">
+                        <!-- Upper Semi -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                            <div class="text-[11px] text-blue-400 font-extrabold uppercase flex justify-between">
+                                <span>Полуфинал Верхней Сетки</span>
+                                <span class="text-amber-400 text-[10px] bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">1 Победитель с BYE ждёт в Финале</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div id="ubs-p1" onclick="winUBSemi(1)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="ubs-p1-name" class="text-xs font-bold text-slate-500 italic">Победитель Группы 1</span>
+                                    <span class="btn-status text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                                <div id="ubs-p2" onclick="winUBSemi(2)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="ubs-p2-name" class="text-xs font-bold text-slate-500 italic">Победитель Группы 2</span>
+                                    <span class="btn-status text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upper Final -->
+                        <div class="bg-slate-900/90 border-2 border-blue-500/50 rounded-2xl p-4 space-y-3">
+                            <div class="text-[11px] text-blue-400 font-black uppercase flex justify-between">
+                                <span>Финал Верхней Сетки</span>
+                                <span class="text-xs text-blue-300">Победитель ➔ ПРЯМО В ГРАНД-ФИНАЛ</span>
+                            </div>
+                            <div class="space-y-2.5">
+                                <div id="ubf-top" onclick="winUBFinal('top')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">BYE</span>
+                                        <span id="ubf-top-name" class="text-xs font-bold text-slate-500 italic">Победитель Группы 3</span>
+                                    </div>
+                                    <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                                <div id="ubf-bot" onclick="winUBFinal('bot')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="ubf-bot-name" class="text-xs font-bold text-slate-500 italic">Победитель ПФ Верхней</span>
+                                    <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LOWER BRACKET (НИЖНЯЯ СЕТКА — ПРОИГРАВШИЕ В 1 РАУНДЕ) -->
+                <section class="bg-slate-900/60 border border-rose-900/40 rounded-3xl p-6 relative backdrop-blur-sm glow-lb space-y-6">
+                    <div class="absolute -top-3.5 left-6 bg-rose-600 text-white text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                        <i data-lucide="skull" class="w-4 h-4"></i> Нижняя Сетка (Проигравшие в 1 Раунде)
+                    </div>
+
+                    <div class="space-y-6 pt-2">
+                        <!-- Lower Round 1 (Match between 2 losers) -->
+                        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                            <div class="text-[11px] text-rose-400 font-extrabold uppercase flex justify-between">
+                                <span>1 Матч Нижней Сетки</span>
+                                <span class="text-rose-500 text-[10px] font-bold uppercase">Проигравший ВЫБЫВАЕТ Completely</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div id="lbm1-p1" onclick="winLBMatch1(1)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="lbm1-p1-name" class="text-xs font-bold text-slate-500 italic">Проигравший Гр. 1</span>
+                                    <span class="btn-status text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                                <div id="lbm1-p2" onclick="winLBMatch1(2)" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="lbm1-p2-name" class="text-xs font-bold text-slate-500 italic">Проигравший Гр. 2</span>
+                                    <span class="btn-status text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lower Final (Winner of LB1 vs Loser of Gr.3) -->
+                        <div class="bg-slate-900/90 border-2 border-rose-500/50 rounded-2xl p-4 space-y-3">
+                            <div class="text-[11px] text-rose-400 font-black uppercase flex justify-between">
+                                <span>Финал Нижней Сетки</span>
+                                <span class="text-rose-400 text-[10px] font-bold">Определяет Победителя Нижней</span>
+                            </div>
+                            <div class="space-y-2.5">
+                                <div id="lbf-top" onclick="winLBFinal('top')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="lbf-top-name" class="text-xs font-bold text-slate-500 italic">Победитель 1 Матча LB</span>
+                                    <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                                <div id="lbf-bot" onclick="winLBFinal('bot')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+                                    <span id="lbf-bot-name" class="text-xs font-bold text-slate-500 italic">Проигравший Группы 3</span>
+                                    <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+
+            <!-- SECTION 3: CROSS MATCH (ПОБЕДИТЕЛЬ НИЖНЕЙ VS ПРОИГРАВШИЙ В ВЕРХНЕЙ) & GRAND FINAL -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                
+                <!-- CROSS MATCH CARD -->
+                <div class="bg-slate-900/80 border-2 border-purple-500/50 rounded-3xl p-6 space-y-4 backdrop-blur-sm relative">
+                    <div class="absolute -top-3.5 left-6 bg-purple-600 text-white text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Стыковой Матч (Cross Match)
+                    </div>
+
+                    <div class="pt-2">
+                        <p class="text-xs text-slate-400 font-medium mb-3">
+                            Битва за второй билет в Гранд-Финал: <br>
+                            <span class="text-rose-400 font-bold">Победитель Нижней Сетки</span> 🆚 <span class="text-blue-400 font-bold">Проигравший в Верхней Сетке</span>
+                        </p>
+
+                        <div class="bg-slate-950 border border-purple-500/30 rounded-2xl p-4 space-y-3">
+                            <div id="cross-ub" onclick="winCrossMatch('ub')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                                <div>
+                                    <span class="text-[10px] text-blue-400 font-extrabold uppercase block">Проигравший в Верхней Сетке</span>
+                                    <span id="cross-ub-name" class="text-xs font-bold text-slate-500 italic">Ждем результата Верхней</span>
+                                </div>
+                                <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                            </div>
+
+                            <div id="cross-lb" onclick="winCrossMatch('lb')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                                <div>
+                                    <span class="text-[10px] text-rose-400 font-extrabold uppercase block">Победитель Нижней Сетки</span>
+                                    <span id="cross-lb-name" class="text-xs font-bold text-slate-500 italic">Ждем результата Нижней</span>
+                                </div>
+                                <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRAND FINAL & PODIUM CARD -->
+                <div class="bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 border-2 border-amber-500/60 rounded-3xl p-6 space-y-6 backdrop-blur-sm glow-gold relative flex flex-col justify-between">
+                    <div class="absolute -top-3.5 left-6 bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-widest px-4 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                        <i data-lucide="trophy" class="w-4 h-4"></i> БОЛЬШОЙ ГРАНД-ФИНАЛ
+                    </div>
+
+                    <!-- Grand Final Match -->
+                    <div class="pt-2 space-y-3">
+                        <div class="text-[11px] text-amber-400 font-black uppercase tracking-wider flex justify-between">
+                            <span>Финал Турнира</span>
+                            <span>Битва за 1 место</span>
+                        </div>
+
+                        <div class="bg-slate-950/90 border border-amber-500/40 rounded-2xl p-3.5 space-y-2.5">
+                            <div id="gf-top" onclick="winGrandFinal('top')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                                <div>
+                                    <span class="text-[10px] text-blue-400 font-extrabold uppercase block">Чемпион Верхней Сетки</span>
+                                    <span id="gf-top-name" class="text-xs font-bold text-slate-500 italic">Финалист UB</span>
+                                </div>
+                                <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                            </div>
+                            <div id="gf-bot" onclick="winGrandFinal('bot')" class="player-slot flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer">
+                                <div>
+                                    <span class="text-[10px] text-purple-400 font-extrabold uppercase block">Победитель Стыкового Матча</span>
+                                    <span id="gf-bot-name" class="text-xs font-bold text-slate-500 italic">Финалист Cross</span>
+                                </div>
+                                <span class="btn-status text-xs font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-600">✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PODIUM DISPLAY -->
+                    <div class="border-t border-slate-800 pt-4 text-center">
+                        <span class="text-[10px] text-amber-400 font-black uppercase tracking-widest block mb-1">ПОБЕДИТЕЛЬ ТУРНИРА</span>
+                        <div id="champ-display" class="text-2xl font-black text-white text-glow-gold min-h-[32px] flex items-center justify-center italic">
+                            —
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-slate-950 border-t border-slate-900 p-4 text-center text-xs text-slate-500 font-medium">
+        Интерактивная турнирная сетка Double Elimination для 6 игроков. Кликайте на карточки игроков для продвижения!
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        const defaultNames = ['Лёша 1', 'Саша', 'Лёша 2', 'Дима', 'Слава', 'Катя'];
+
+        // Tournament State
+        let state = {
+            // R1 Matches (1 = player 1 won, 2 = player 2 won)
+            r1m1Winner: null, // 0 (Лёша 1) or 1 (Саша)
+            r1m2Winner: null, // 2 (Лёша 2) or 3 (Дима)
+            r1m3Winner: null, // 4 (Слава) or 5 (Катя)
+
+            // Upper Bracket
+            ubSemiWinner: null, // 1 (Winner R1M1) or 2 (Winner R1M2)
+            ubFinalWinner: null, // 'top' (Winner R1M3) or 'bot' (Winner UBSemi)
+
+            // Lower Bracket
+            lbMatch1Winner: null, // 1 (Loser R1M1) or 2 (Loser R1M2)
+            lbFinalWinner: null,  // 'top' (Winner LBMatch1) or 'bot' (Loser R1M3)
+
+            // Cross Match
+            crossWinner: null, // 'ub' (Loser UB Final) or 'lb' (Winner LB Final)
+
+            // Grand Final
+            grandWinner: null // 'top' (Winner UB Final) or 'bot' (Winner Cross)
+        };
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Listen for player name edits
+        document.querySelectorAll('input[data-player-id]').forEach(input => {
+            input.addEventListener('input', () => render());
+        });
+
+        function getPlayerName(id) {
+            const el = document.querySelector(`input[data-player-id="${id}"]`);
+            return el ? el.value.trim() || `Игрок ${id + 1}` : '';
+        }
+
+        // --- Winner Click Handlers ---
+        function winR1Match(matchNum, playerIdx) {
+            if (matchNum === 1) state.r1m1Winner = playerIdx;
+            if (matchNum === 2) state.r1m2Winner = playerIdx;
+            if (matchNum === 3) state.r1m3Winner = playerIdx;
+            render();
+        }
+
+        function winUBSemi(winnerNumber) {
+            if (!getWinnerR1(1) || !getWinnerR1(2)) return;
+            state.ubSemiWinner = winnerNumber;
+            render();
+        }
+
+        function winUBFinal(side) {
+            if (!getWinnerR1(3) || !getUBSemiWinnerName()) return;
+            state.ubFinalWinner = side;
+            render();
+        }
+
+        function winLBMatch1(loserNumber) {
+            if (!getLoserR1(1) || !getLoserR1(2)) return;
+            state.lbMatch1Winner = loserNumber;
+            render();
+        }
+
+        function winLBFinal(side) {
+            if (!getLBMatch1WinnerName() || !getLoserR1(3)) return;
+            state.lbFinalWinner = side;
+            render();
+        }
+
+        function winCrossMatch(side) {
+            if (!getUBFinalLoserName() || !getLBFinalWinnerName()) return;
+            state.crossWinner = side;
+            render();
+        }
+
+        function winGrandFinal(side) {
+            if (!getUBFinalWinnerName() || !getCrossWinnerName()) return;
+            state.grandWinner = side;
+            render();
+        }
+
+        // --- Helper Calculations ---
+        function getWinnerR1(matchNum) {
+            if (matchNum === 1) return state.r1m1Winner !== null ? getPlayerName(state.r1m1Winner) : null;
+            if (matchNum === 2) return state.r1m2Winner !== null ? getPlayerName(state.r1m2Winner) : null;
+            if (matchNum === 3) return state.r1m3Winner !== null ? getPlayerName(state.r1m3Winner) : null;
+            return null;
+        }
+
+        function getLoserR1(matchNum) {
+            if (matchNum === 1) {
+                if (state.r1m1Winner === null) return null;
+                return getPlayerName(state.r1m1Winner === 0 ? 1 : 0);
+            }
+            if (matchNum === 2) {
+                if (state.r1m2Winner === null) return null;
+                return getPlayerName(state.r1m2Winner === 2 ? 3 : 2);
+            }
+            if (matchNum === 3) {
+                if (state.r1m3Winner === null) return null;
+                return getPlayerName(state.r1m3Winner === 4 ? 5 : 4);
+            }
+            return null;
+        }
+
+        function getUBSemiWinnerName() {
+            if (state.ubSemiWinner === 1) return getWinnerR1(1);
+            if (state.ubSemiWinner === 2) return getWinnerR1(2);
+            return null;
+        }
+
+        function getUBSemiLoserName() {
+            if (state.ubSemiWinner === 1) return getWinnerR1(2);
+            if (state.ubSemiWinner === 2) return getWinnerR1(1);
+            return null;
+        }
+
+        function getUBFinalWinnerName() {
+            if (state.ubFinalWinner === 'top') return getWinnerR1(3);
+            if (state.ubFinalWinner === 'bot') return getUBSemiWinnerName();
+            return null;
+        }
+
+        function getUBFinalLoserName() {
+            if (state.ubFinalWinner === 'top') return getUBSemiWinnerName();
+            if (state.ubFinalWinner === 'bot') return getWinnerR1(3);
+            return null;
+        }
+
+        function getLBMatch1WinnerName() {
+            if (state.lbMatch1Winner === 1) return getLoserR1(1);
+            if (state.lbMatch1Winner === 2) return getLoserR1(2);
+            return null;
+        }
+
+        function getLBMatch1LoserName() {
+            if (state.lbMatch1Winner === 1) return getLoserR1(2);
+            if (state.lbMatch1Winner === 2) return getLoserR1(1);
+            return null;
+        }
+
+        function getLBFinalWinnerName() {
+            if (state.lbFinalWinner === 'top') return getLBMatch1WinnerName();
+            if (state.lbFinalWinner === 'bot') return getLoserR1(3);
+            return null;
+        }
+
+        function getCrossWinnerName() {
+            if (state.crossWinner === 'ub') return getUBFinalLoserName();
+            if (state.crossWinner === 'lb') return getLBFinalWinnerName();
+            return null;
+        }
+
+        // --- Card Styling Helper ---
+        function setSlotState(elId, isWinner, isEnabled = true, customStatusText = null) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const btn = el.querySelector('.btn-status');
+
+            if (isWinner) {
+                el.className = "player-slot flex items-center justify-between p-3 rounded-xl bg-blue-950/90 border border-blue-500 text-blue-300 shadow-md cursor-pointer";
+                if (btn) {
+                    btn.textContent = customStatusText || "Победа ✓";
+                    btn.className = "btn-status text-xs font-black px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow";
+                }
+            } else if (!isEnabled) {
+                el.className = "player-slot flex items-center justify-between p-3 rounded-xl bg-slate-950/40 border border-slate-900 opacity-40 cursor-not-allowed";
+                if (btn) {
+                    btn.textContent = customStatusText || "—";
+                    btn.className = "btn-status text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-700";
+                }
+            } else {
+                el.className = "player-slot flex items-center justify-between p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 cursor-pointer hover:border-slate-500";
+                if (btn) {
+                    btn.textContent = customStatusText || "Выбрать";
+                    btn.className = "btn-status text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300";
+                }
+            }
+        }
+
+        // --- Render UI ---
+        function render() {
+            // R1 Slots
+            setSlotState('r1m1-p0', state.r1m1Winner === 0);
+            setSlotState('r1m1-p1', state.r1m1Winner === 1);
+            setSlotState('r1m2-p2', state.r1m2Winner === 2);
+            setSlotState('r1m2-p3', state.r1m2Winner === 3);
+            setSlotState('r1m3-p4', state.r1m3Winner === 4);
+            setSlotState('r1m3-p5', state.r1m3Winner === 5);
+
+            // Upper Semi-Final
+            const winR1M1 = getWinnerR1(1);
+            const winR1M2 = getWinnerR1(2);
+            const ubsP1Name = document.getElementById('ubs-p1-name');
+            const ubsP2Name = document.getElementById('ubs-p2-name');
+
+            if (winR1M1) {
+                ubsP1Name.textContent = winR1M1;
+                ubsP1Name.className = "text-xs font-bold text-slate-100";
+                setSlotState('ubs-p1', state.ubSemiWinner === 1, true);
+            } else {
+                ubsP1Name.textContent = "Победитель Группы 1";
+                ubsP1Name.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('ubs-p1', false, false);
+            }
+
+            if (winR1M2) {
+                ubsP2Name.textContent = winR1M2;
+                ubsP2Name.className = "text-xs font-bold text-slate-100";
+                setSlotState('ubs-p2', state.ubSemiWinner === 2, true);
+            } else {
+                ubsP2Name.textContent = "Победитель Группы 2";
+                ubsP2Name.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('ubs-p2', false, false);
+            }
+
+            // Upper Final
+            const winR1M3 = getWinnerR1(3);
+            const winUBSemi = getUBSemiWinnerName();
+            const ubfTopName = document.getElementById('ubf-top-name');
+            const ubfBotName = document.getElementById('ubf-bot-name');
+
+            if (winR1M3) {
+                ubfTopName.textContent = winR1M3;
+                ubfTopName.className = "text-xs font-bold text-slate-100";
+                setSlotState('ubf-top', state.ubFinalWinner === 'top', true);
+            } else {
+                ubfTopName.textContent = "Победитель Группы 3";
+                ubfTopName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('ubf-top', false, false);
+            }
+
+            if (winUBSemi) {
+                ubfBotName.textContent = winUBSemi;
+                ubfBotName.className = "text-xs font-bold text-slate-100";
+                setSlotState('ubf-bot', state.ubFinalWinner === 'bot', true);
+            } else {
+                ubfBotName.textContent = "Победитель ПФ Верхней";
+                ubfBotName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('ubf-bot', false, false);
+            }
+
+            // Lower Bracket Round 1
+            const loserR1M1 = getLoserR1(1);
+            const loserR1M2 = getLoserR1(2);
+            const lbm1P1Name = document.getElementById('lbm1-p1-name');
+            const lbm1P2Name = document.getElementById('lbm1-p2-name');
+
+            if (loserR1M1) {
+                lbm1P1Name.textContent = loserR1M1;
+                lbm1P1Name.className = "text-xs font-bold text-slate-100";
+                setSlotState('lbm1-p1', state.lbMatch1Winner === 1, true);
+            } else {
+                lbm1P1Name.textContent = "Проигравший Гр. 1";
+                lbm1P1Name.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('lbm1-p1', false, false);
+            }
+
+            if (loserR1M2) {
+                lbm1P2Name.textContent = loserR1M2;
+                lbm1P2Name.className = "text-xs font-bold text-slate-100";
+                setSlotState('lbm1-p2', state.lbMatch1Winner === 2, true);
+            } else {
+                lbm1P2Name.textContent = "Проигравший Гр. 2";
+                lbm1P2Name.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('lbm1-p2', false, false);
+            }
+
+            // Lower Bracket Final
+            const winLBM1 = getLBMatch1WinnerName();
+            const loserR1M3 = getLoserR1(3);
+            const lbfTopName = document.getElementById('lbf-top-name');
+            const lbfBotName = document.getElementById('lbf-bot-name');
+
+            if (winLBM1) {
+                lbfTopName.textContent = winLBM1;
+                lbfTopName.className = "text-xs font-bold text-slate-100";
+                setSlotState('lbf-top', state.lbFinalWinner === 'top', true);
+            } else {
+                lbfTopName.textContent = "Победитель 1 Матча LB";
+                lbfTopName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('lbf-top', false, false);
+            }
+
+            if (loserR1M3) {
+                lbfBotName.textContent = loserR1M3;
+                lbfBotName.className = "text-xs font-bold text-slate-100";
+                setSlotState('lbf-bot', state.lbFinalWinner === 'bot', true);
+            } else {
+                lbfBotName.textContent = "Проигравший Группы 3";
+                lbfBotName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('lbf-bot', false, false);
+            }
+
+            // Cross Match
+            const loserUBFinal = getUBFinalLoserName();
+            const winLBFinal = getLBFinalWinnerName();
+            const crossUbName = document.getElementById('cross-ub-name');
+            const crossLbName = document.getElementById('cross-lb-name');
+
+            if (loserUBFinal) {
+                crossUbName.textContent = loserUBFinal;
+                crossUbName.className = "text-xs font-bold text-slate-100";
+                setSlotState('cross-ub', state.crossWinner === 'ub', true);
+            } else {
+                crossUbName.textContent = "Ждем результата Верхней";
+                crossUbName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('cross-ub', false, false);
+            }
+
+            if (winLBFinal) {
+                crossLbName.textContent = winLBFinal;
+                crossLbName.className = "text-xs font-bold text-slate-100";
+                setSlotState('cross-lb', state.crossWinner === 'lb', true);
+            } else {
+                crossLbName.textContent = "Ждем результата Нижней";
+                crossLbName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('cross-lb', false, false);
+            }
+
+            // Grand Final
+            const winUBFinal = getUBFinalWinnerName();
+            const winCross = getCrossWinnerName();
+            const gfTopName = document.getElementById('gf-top-name');
+            const gfBotName = document.getElementById('gf-bot-name');
+
+            if (winUBFinal) {
+                gfTopName.textContent = winUBFinal;
+                gfTopName.className = "text-xs font-bold text-slate-100";
+                setSlotState('gf-top', state.grandWinner === 'top', true);
+            } else {
+                gfTopName.textContent = "Финалист UB";
+                gfTopName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('gf-top', false, false);
+            }
+
+            if (winCross) {
+                gfBotName.textContent = winCross;
+                gfBotName.className = "text-xs font-bold text-slate-100";
+                setSlotState('gf-bot', state.grandWinner === 'bot', true);
+            } else {
+                gfBotName.textContent = "Финалист Cross";
+                gfBotName.className = "text-xs font-semibold text-slate-500 italic";
+                setSlotState('gf-bot', false, false);
+            }
+
+            // Champion Display
+            const champEl = document.getElementById('champ-display');
+            if (state.grandWinner !== null) {
+                champEl.textContent = state.grandWinner === 'top' ? winUBFinal : winCross;
+            } else {
+                champEl.textContent = "—";
+            }
+        }
+
+        // --- Controls ---
+        function resetState() {
+            state = {
+                r1m1Winner: null,
+                r1m2Winner: null,
+                r1m3Winner: null,
+                ubSemiWinner: null,
+                ubFinalWinner: null,
+                lbMatch1Winner: null,
+                lbFinalWinner: null,
+                crossWinner: null,
+                grandWinner: null
+            };
+            render();
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('input[data-player-id]');
+            inputs.forEach((input, idx) => {
+                input.value = defaultNames[idx];
+            });
+            resetState();
+        });
+
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            const inputs = Array.from(document.querySelectorAll('input[data-player-id]'));
+            const names = inputs.map(i => i.value);
+
+            for (let i = names.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [names[i], names[j]] = [names[j], names[i]];
+            }
+
+            inputs.forEach((input, idx) => {
+                input.value = names[idx];
+            });
+            resetState();
+        });
+
+        // First Render
+        render();
+    </script>
+</body>
+</html>
